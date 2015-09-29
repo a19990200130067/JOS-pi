@@ -26,20 +26,20 @@
 	sub	sp, sp, #(4*17)	;	/* Adjust the stack pointer */	   \
 	stmia	sp, {r0-r12}	;	/* Push the user mode registers */ \
 	add	r0, sp, #(4*13)	;	/* Adjust the stack pointer */	   \
-	stmia	r0, {r13-r14}^	;	/* Push the user mode registers */ \
+	stmia	r0, {sp, lr}^	;	/* Push the user mode registers */ \
 	mov	r0, r0		;	/* NOP for previous instruction */ \
 	mrs	r0, spsr	;	/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!	;
 
-#define PULLFRAME							   \
-	ldr	r0, [sp], #4	;	/* Get the SPSR from stack */	   \
-	msr	spsr_fsxc, r0	;					   \
-	clrex			;					   \
-	ldmia   sp, {r0-r14}^	;	/* Restore registers (usr mode) */ \
-	mov	r0, r0		;	/* NOP for previous instruction */ \
-	add	sp, sp, #(4*17)	;	/* Adjust the stack pointer */	   \
-	ldr	lr, [sp], #4	;	/* Pull the return address */	   \
-	add	sp, sp, #4	;	/* Align the stack */
+#define PULLFRAME								   \
+	ldr	r0, [sp], #4		;	/* Get the SPSR from stack */	   \
+	msr	spsr_fsxc, r0		;					   \
+	clrex				;					   \
+	ldmia   sp, {r0-r12, sp, lr}^	;	/* Restore registers (usr mode) */ \
+	mov	r0, r0			;	/* NOP for previous instruction */ \
+	add	sp, sp, #(4*17)		;	/* Adjust the stack pointer */	   \
+	ldr	lr, [sp], #4		;	/* Pull the return address */	   \
+	add	sp, sp, #4		;	/* Align the stack */
 
 	#stmfd	sp!, {r0-r12, lr};				\
 	#ldr	sp, =stack_start;/* first set stack to KSTACKTOP */     \
@@ -117,12 +117,7 @@ stack_start:
  */
 
 alltraps:
-	bl	trap_handler
-	#bl	trap_handler
-	#ldr	r0, led_set_val 
-	#ldr	r1, led_off_addr 
-	#str	r0, [r1]
-	#ldmfd  	sp!, {r0-r12, sp, pc}^
+	bl	trap
 	PULLFRAME
 	movs	pc, lr
 

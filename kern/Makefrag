@@ -8,6 +8,7 @@ KERN_SRCFILES :=	kern/entry.S \
 			kern/monitor.c \
 			kern/printf.c \
 			kern/pmap.c \
+			kern/trap.c \
 			lib/string.c \
 			lib/printfmt.c
 

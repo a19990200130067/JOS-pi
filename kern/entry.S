@@ -46,7 +46,7 @@ _relocated:
 	mov	fp, #0
 	//mcr	p15, 0, r1, c1, c0, 0
 	ldr	sp, =bootstacktop
-	b       arm_init
+	bl	arm_init	
 
 _inf_loop:
 	b       _inf_loop

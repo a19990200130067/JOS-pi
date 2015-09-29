@@ -27,7 +27,7 @@
 #include <inc/types.h>
 
 struct PushRegs {
-    /* registers as pushed by pusha */
+    /* registers as pushed by stmia */
     uint32_t reg_r0;
     uint32_t reg_r1;
     uint32_t reg_r2;
@@ -48,7 +48,10 @@ struct Trapframe {
     struct PushRegs tf_regs;
     uint32_t tf_sp_user;
     uint32_t tf_lr_user;
+    uint32_t tf_sp_svc;
+    uint32_t tf_lr_svc;
     uint32_t tf_ret_addr;
+    uint32_t tf_padding;
 } __attribute__((packed));
 
 struct UTrapframe {

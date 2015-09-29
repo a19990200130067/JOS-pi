@@ -5,6 +5,7 @@
 #include <inc/arm.h>
 #include <inc/trap.h>
 #include <kern/pmap.h>
+#include <kern/trap.h>
 
 
 void spinsleep(int ctr) {
@@ -12,30 +13,14 @@ void spinsleep(int ctr) {
     for(tim = 0; tim < ctr; tim++);
 }
 
-void print_trapframe(struct Trapframe *tf) {
-    int i = 0;
-    cprintf("start printing trapframe: \n");
-    for (i = 0; i < (sizeof(struct Trapframe) / sizeof(uint32_t)) + 5; i++) {
-	cprintf("reg: 0x%x\n", ((uint32_t *)tf)[i]);
-    }
-    cprintf("end printing tf\n");
-}
-
 void trap_handler(struct Trapframe *tf, uint32_t r0) {
-    uint32_t lr;
-    asm volatile("mov %[val], lr" : [val] "=r" (lr):);
-    cprintf("in trap!!! cpsr is: 0x%x, spsr is 0x%x, r0 is 0x%x\n", rcpsr(), rspsr(), r0);
-    cprintf("in trap2!!! cpsr is: 0x%x, lr is 0x%x\n", rcpsr(), lr);
-    print_trapframe(tf);
-    LED_OFF();
-    spinsleep(1000000);
-    LED_ON();
-    //asm volatile("swi #10":::);
-    cprintf("why swi not working?\n");
 }
 
 int arm_init() {
     extern char edata[], end[];
+    
+    uint32_t lr;
+    asm volatile("mov %[val], lr" : [val] "=r" (lr):);
 
     // Before doing anything else, complete the ELF loading process.
     // Clear the uninitialized global data (BSS) section of our program.
@@ -45,14 +30,13 @@ int arm_init() {
     // Only after cons_init can we invoke the cprintf function call
     cons_init();
     cprintf("Welcome to the JOS kernel\n");
-    cprintf("6828 decimal is %o octal!\n", 6828);
+    cprintf("451 decimal is %o octal!\n", 451);
 
     mem_init();
     cprintf("memory init complete!\n");
 
-    extern char int_vector[];
-    cprintf("int_vec addr: 0x%x\n", (uint32_t)int_vector);
-    page_insert(kern_pgdir, pa2page(PADDR(int_vector)), 0, PTE_P);
+    trap_init();
+
     RPI_GetGpio()->LED_GPFSEL |= (1 << LED_GPFBIT);
     //LED_OFF();
     //*((int *)0x3f200020) = 0x8000;
@@ -60,11 +44,18 @@ int arm_init() {
     cprintf("cpsr is: 0x%x, spsr is: 0x%x\n", cpsr, rspsr());
     //cpsr = 0x60000003;
     //lcpsr(cpsr);
+
+    cprintf("arm_init, lr is 0x%x\n", lr);
     
     cprintf("cpsr is: 0x%x\n", rcpsr());
     int pc_before = read_pc();
+    int sp_tmp = 0;
+    asm volatile("mov %[val], sp" : [val] "=r" (sp_tmp) : );
+    cprintf("sp is 0x%x\n", sp_tmp);
     asm volatile("swi #10":::);
     cprintf("pc is: 0x%x\n", pc_before);
+    asm volatile("mov %[val], sp" : [val] "=r" (sp_tmp) : );
+    cprintf("sp is 0x%x\n", sp_tmp);
 
     cprintf("swi over, and again. cpsr: 0x%x, spsr: 0x%x\n", rcpsr(), rspsr());
     //asm volatile("swi #20":::);
@@ -82,14 +73,14 @@ int arm_init() {
 	/* Set the LED GPIO pin low ( Turn OK LED on for original Pi, and off
 	   for plus models )*/
 	//gpio[LED_GPCLR] = (1 << LED_GPIO_BIT);
-	//LED_ON();
+	LED_ON();
 
 	spinsleep(100000);
 
 	/* Set the LED GPIO pin high ( Turn OK LED off for original Pi, and on
 	   for plus models )*/
 	//gpio[LED_GPSET] = (1 << LED_GPIO_BIT);
-	//LED_OFF();
+	LED_OFF();
     }
 }
 
