@@ -194,7 +194,7 @@ mem_init(void)
 
     boot_map_region(kern_pgdir, UPAGES, ROUNDUP(npages * sizeof(struct PageInfo), PGSIZE), 
 		    PADDR(pages), PTE_P | PTE_U | PTE_NW);
-    cprintf("check addr: 0x%x\n", kern_pgdir[PDX(IOPHYSMEM)]);
+    //cprintf("check addr: 0x%x\n", kern_pgdir[PDX(IOPHYSMEM)]);
 
     //////////////////////////////////////////////////////////////////////
     // Map the 'envs' array read-only by the user at linear address UENVS
@@ -220,7 +220,7 @@ mem_init(void)
     // Your code goes here:
 
     boot_map_region(kern_pgdir, KSTACKTOP-KSTKSIZE, KSTKSIZE, PADDR(bootstack), PTE_P);
-    cprintf("check addr: 0x%x\n", kern_pgdir[PDX(IOPHYSMEM)]);
+    //cprintf("check addr: 0x%x\n", kern_pgdir[PDX(IOPHYSMEM)]);
 
     //////////////////////////////////////////////////////////////////////
     // Map all of physical memory at KERNBASE.
@@ -234,13 +234,13 @@ mem_init(void)
     int numOfKernPage = (~0 - KERNBASE + 1) / PGSIZE;
     boot_map_region(kern_pgdir, KERNBASE,
 		    numOfKernPage * PGSIZE, 0, PTE_P);
-    cprintf("check addr: 0x%x\n", kern_pgdir[PDX(IOPHYSMEM)]);
+    //cprintf("check addr: 0x%x\n", kern_pgdir[PDX(IOPHYSMEM)]);
 
     boot_map_region(kern_pgdir, PERIPHERAL_BASE, PTSIZE * 4, PERIPHERAL_BASE, PTE_P);
 
     cprintf("check va2pa UPAGE result: 0x%x\n", check_va2pa(kern_pgdir, KERNBASE));
 
-    cprintf("check addr: 0x%x\n", kern_pgdir[PDX(IOPHYSMEM)]);
+    //cprintf("check addr: 0x%x\n", kern_pgdir[PDX(IOPHYSMEM)]);
 
     // Initialize the SMP-related parts of the memory map
     //mem_init_mp();
@@ -1146,16 +1146,16 @@ check_page(void)
     // should be able to allocate three pages
     pp0 = pp1 = pp2 = 0;
     assert((pp0 = page_alloc(0)));
-    cprintf("next ptr: %p\n", pp0->pp_link);
+    //cprintf("next ptr: %p\n", pp0->pp_link);
     assert((pp1 = page_alloc(0)));
-    cprintf("next ptr: %p\n", pp0->pp_link);
+    //cprintf("next ptr: %p\n", pp0->pp_link);
     assert((pp2 = page_alloc(0)));
-    cprintf("next ptr: %p\n", pp0->pp_link);
+    //cprintf("next ptr: %p\n", pp0->pp_link);
 
     assert(pp0);
     assert(pp1 && pp1 != pp0);
     assert(pp2 && pp2 != pp1 && pp2 != pp0);
-    cprintf("next ptr: %p\n", pp0->pp_link);
+    //cprintf("next ptr: %p\n", pp0->pp_link);
 
     // temporarily steal the rest of the free pages
     fl = page_free_list;
