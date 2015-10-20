@@ -29,6 +29,8 @@ extern const volatile struct Env *thisenv;
 extern const volatile struct Env envs[NENV];
 extern const volatile struct PageInfo pages[];
 
+int32_t syscall_warp(num, check, a1, a2, a3, a4, a5);
+
 // exit.c
 void	exit(void);
 
@@ -59,11 +61,6 @@ static __inline envid_t __attribute__((always_inline))
 sys_exofork(void)
 {
 	envid_t ret;
-	__asm __volatile("int %2"
-		: "=a" (ret)
-		: "a" (SYS_exofork),
-		  "i" (T_SYSCALL)
-	);
 	return ret;
 }
 

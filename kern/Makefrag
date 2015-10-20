@@ -1,6 +1,9 @@
+OBJDIRS += kern
+
 KERN_SRCFILES :=	kern/entry.S \
 	      		kern/init.c \
 			kern/entrypgdir.c \
+			kern/env.c \
 			kern/rpi-gpio.c \
 			kern/rpi-aux.c \
 			kern/console.c \
@@ -9,8 +12,12 @@ KERN_SRCFILES :=	kern/entry.S \
 			kern/printf.c \
 			kern/pmap.c \
 			kern/trap.c \
+			kern/syscall.c \
 			lib/string.c \
 			lib/printfmt.c
+
+KERN_BINFILES := 	user/idle \
+	      		user/test
 
 KERN_SRCFILES := $(wildcard $(KERN_SRCFILES))
 
@@ -18,6 +25,7 @@ KERN_OBJFILES := $(patsubst %.c, $(OBJDIR)/%.o, $(KERN_SRCFILES))
 KERN_OBJFILES := $(patsubst %.S, $(OBJDIR)/%.o, $(KERN_OBJFILES))
 KERN_OBJFILES := $(patsubst $(OBJDIR)/lib/%, $(OBJDIR)/kern/%, $(KERN_OBJFILES))
 
+KERN_BINFILES := $(patsubst %, $(OBJDIR)/%, $(KERN_BINFILES))
 KERN_LDFLAGS := -T kern/kernel.ld -nostdlib
 
 # How to build kernel object files
@@ -36,8 +44,8 @@ $(OBJDIR)/kern/%.o: lib/%.c
 		    @mkdir -p $(@D)
 		    $(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
 
-kernel.elf: $(KERN_OBJFILES) kern/kernel.ld
-	    $(CC) $(KERN_CFLAGS) $(KERN_LDFLAGS) $(KERN_OBJFILES) -o $@ $(TOP)/libgcc.a
+kernel.elf: $(KERN_OBJFILES) $(KERN_BINFILES) kern/kernel.ld
+	    $(V)$(LD) $(KERN_LDFLAGS) $(KERN_OBJFILES) -o $@ $(TOP)/libgcc.a -b binary $(KERN_BINFILES)
 
 kernel7.img: kernel.elf
-	     $(OBJCOPY) kernel.elf -O binary $@
+	     $(V)$(OBJCOPY) kernel.elf -O binary $@

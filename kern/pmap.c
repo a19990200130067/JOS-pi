@@ -2,11 +2,12 @@
 
 #include <inc/arm.h>
 #include <inc/mmu.h>
-//#include <inc/env.h>
+#include <inc/env.h>
 #include <inc/error.h>
 #include <inc/string.h>
 #include <inc/assert.h>
 
+#include <kern/env.h>
 #include <kern/pmap.h>
 
 // These variables are set by arm_detect_memory()
@@ -165,8 +166,8 @@ mem_init(void)
     // Make 'envs' point to an array of size 'NENV' of 'struct Env'.
     // LAB 3: Your code here.
     
-    //envs = (struct Env *)boot_alloc(NENV * sizeof(struct Env));
-    //memset(envs, 0, NENV * sizeof(struct Env));
+    envs = (struct Env *)boot_alloc(NENV * sizeof(struct Env), PGSIZE);
+    memset(envs, 0, NENV * sizeof(struct Env));
     
     //////////////////////////////////////////////////////////////////////
     // Now that we've allocated the initial kernel data structures, we set

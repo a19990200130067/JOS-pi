@@ -6,6 +6,7 @@
 #include <inc/trap.h>
 #include <kern/pmap.h>
 #include <kern/trap.h>
+#include <kern/env.h>
 
 
 void spinsleep(int ctr) {
@@ -36,20 +37,15 @@ int arm_init() {
     cprintf("memory init complete!\n");
 
     trap_init();
-
     RPI_GetGpio()->LED_GPFSEL |= (1 << LED_GPFBIT);
-    //LED_OFF();
-    //*((int *)0x3f200020) = 0x8000;
-    int cpsr = rcpsr();
-    cprintf("cpsr is: 0x%x, spsr is: 0x%x\n", cpsr, rspsr());
-    //cpsr = 0x60000003;
-    //lcpsr(cpsr);
 
-    cprintf("arm_init, lr is 0x%x\n", lr);
-    
-    cprintf("cpsr is: 0x%x\n", rcpsr());
+    env_init();
+
+    ENV_CREATE(user_idle, ENV_TYPE_USER);
+
     int pc_before = read_pc();
     int sp_tmp = 0;
+    /*
     asm volatile("mov %[val], sp" : [val] "=r" (sp_tmp) : );
     cprintf("sp is 0x%x\n", sp_tmp);
     asm volatile("swi #10":::);
@@ -59,7 +55,7 @@ int arm_init() {
 
     cprintf("swi over, and again. cpsr: 0x%x, spsr: 0x%x\n", rcpsr(), rspsr());
     //asm volatile("swi #20":::);
-    
+    */
     /* Assign the address of the GPIO peripheral (Using ARM Physical Address) */
     volatile unsigned int *gpio = (unsigned int*)GPIO_BASE;
 

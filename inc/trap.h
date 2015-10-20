@@ -1,6 +1,33 @@
 #ifndef JOS_INC_TRAP_H
 #define JOS_INC_TRAP_H
 
+#define INSN_SIZE       4
+#define INSN_COND_MASK  0xf0000000      /* Condition mask */
+#define PSR_MODE        0x0000001f      /* mode mask */
+#define PSR_USR32_MODE  0x00000010
+#define PSR_FIQ32_MODE  0x00000011
+#define PSR_IRQ32_MODE  0x00000012
+#define PSR_SVC32_MODE  0x00000013
+#define PSR_MON32_MODE  0x00000016
+#define PSR_ABT32_MODE  0x00000017
+#define PSR_HYP32_MODE  0x0000001a
+#define PSR_UND32_MODE  0x0000001b
+#define PSR_SYS32_MODE  0x0000001f
+#define PSR_32_MODE     0x00000010
+#define PSR_T           0x00000020      /* Instruction set bit */
+#define PSR_F           0x00000040      /* FIQ disable bit */
+#define PSR_I           0x00000080      /* IRQ disable bit */
+#define PSR_A           0x00000100      /* Imprecise abort bit */
+#define PSR_E           0x00000200      /* Data endianess bit */
+#define PSR_GE          0x000f0000      /* Greater than or equal to bits */
+#define PSR_J           0x01000000      /* Java bit */
+#define PSR_Q           0x08000000      /* Sticky overflow bit */
+#define PSR_V           0x10000000      /* Overflow bit */
+#define PSR_C           0x20000000      /* Carry bit */
+#define PSR_Z           0x40000000      /* Zero bit */
+#define PSR_N           0x80000000      /* Negative bit */
+#define PSR_FLAGS       0xf0000000      /* Flags mask. */
+
 // Trap numbers
 // These are processor defined:
 #define T_RESET         0x00		// reset

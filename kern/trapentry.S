@@ -1,5 +1,4 @@
 /* See COPYRIGHT for copyright information. */
-
 #include <inc/mmu.h>
 #include <inc/memlayout.h>
 #include <inc/trap.h>
@@ -31,6 +30,32 @@
 	mrs	r0, spsr	;	/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!	;
 
+#define PUSHFRAMEINSVC							   \
+	stmdb	sp, {r0-r3}		  ;		/* Save 4 registers */		   \
+	mov	r0, lr			  ;		/* Save xxx32 r14 */		   \
+	mov	r1, sp			  ;		/* Save xxx32 sp */		   \
+	mrs	r3, spsr		  ;		/* Save xxx32 spsr */		   \
+	mrs	r2, cpsr		  ;		/* Get the CPSR */		   \
+	bic	r2, r2, #(PSR_MODE) 	  ;		/* Fix for SVC mode */		   \
+	orr	r2, r2, #(PSR_SVC32_MODE) ;						   \
+	msr	cpsr_c, r2		  ;		/* Punch into SVC mode */	   \
+	mov	r2, sp			  ;		/* Save	SVC sp */		   \
+	bic	sp, sp, #7		  ;		/* Align sp to an 8-byte addrress */  \
+	sub	sp, sp, #(4 * 17)	  ;	/* Pad trapframe to keep alignment */ \
+	/* and for dtrace to emulate push/pop */  \
+	str	r0, [sp, #-4]!	;	/* Push return address */	   \
+	str	lr, [sp, #-4]!	;	/* Push SVC lr */		   \
+	str	r2, [sp, #-4]!	;	/* Push SVC sp */		   \
+	msr	spsr_fsxc, r3	;	/* Restore correct spsr */	   \
+	ldmdb	r1, {r0-r3}	;	/* Restore 4 regs from xxx mode */ \
+	sub	sp, sp, #(4*15)	;	/* Adjust the stack pointer */	   \
+	stmia	sp, {r0-r12}	;	/* Push the user mode registers */ \
+	add	r0, sp, #(4*13)	;	/* Adjust the stack pointer */	   \
+	stmia	r0, {r13-r14}^	;	/* Push the user mode registers */ \
+	mov	r0, r0		;	/* NOP for previous instruction */ \
+	mrs	r0, spsr	;	/* Put the SPSR on the stack */	   \
+	str	r0, [sp, #-4]!	;
+
 #define PULLFRAME								   \
 	ldr	r0, [sp], #4		;	/* Get the SPSR from stack */	   \
 	msr	spsr_fsxc, r0		;					   \
@@ -41,17 +66,34 @@
 	ldr	lr, [sp], #4		;	/* Pull the return address */	   \
 	add	sp, sp, #4		;	/* Align the stack */
 
-	#stmfd	sp!, {r0-r12, lr};				\
-	#ldr	sp, =stack_start;/* first set stack to KSTACKTOP */     \
+#define PULLFRAMEFROMSVCANDEXIT						   \
+	ldr	r0, [sp], #4	;	/* Get the SPSR from stack */	   \
+	msr	spsr_fsxc, r0	;	/* restore SPSR */		   \
+	clrex			;					   \
+	ldmia	sp, {r0-r14}^	;	/* Restore registers (usr mode) */ \
+	mov	r0, r0		;	/* NOP for previous instruction */ \
+	add	sp, sp, #(4*15)	;	/* Adjust the stack pointer */	   \
+	ldmia	sp, {sp, lr, pc}^	/* Restore lr and exit */
 	
 #define TRAPHANDLER(name, num)						\
 	.globl name;		/* define global symbol for 'name' */	\
 name:			        /* function starts here */		\
 	PUSHFRAME               					\
 	movs	r0, sp		;					\
-	ldr	r1, [pc]	;					\
+	ldr	r1, (name##n)	;					\
 	ldr	pc, _alltraps	;					\
+name##n:	                                                        \
 	.word num;
+
+#define TRAPHANDLERINSVC(name, num)						\
+	.globl name;		/* define global symbol for 'name' */	\
+name:			        /* function starts here */		\
+	PUSHFRAMEINSVC               					\
+	movs	r0, sp		;					\
+	ldr	r1, name##nn	;					\
+	ldr	pc, name	;					\
+name##nn:	                                                        \
+	.word num;	
 
 #define VECENTRY(label, name)                                           \
 label:  .word name
@@ -85,14 +127,14 @@ int_vector:
 	
 	VECENTRY(_alltraps, alltraps)
 
-	TRAPHANDLER(reset_handler, 0)
-	TRAPHANDLER(undefined_instruction_handler, 1)
+	TRAPHANDLERINSVC(reset_handler, 0)
+	TRAPHANDLERINSVC(undefined_instruction_handler, 1)
 	TRAPHANDLER(sw_i_handler, 2)
-	TRAPHANDLER(prefetch_abort_handler, 3)
-	TRAPHANDLER(data_abort_handler, 4)
-	TRAPHANDLER(unused_handler_handler, 5)
-	TRAPHANDLER(interrupt_handler, 6)
-	TRAPHANDLER(fiq_handler, 7)
+	TRAPHANDLERINSVC(prefetch_abort_handler, 3)
+	TRAPHANDLERINSVC(data_abort_handler, 4)
+	TRAPHANDLERINSVC(unused_handler_handler, 5)
+	TRAPHANDLERINSVC(interrupt_handler, 6)
+	TRAPHANDLERINSVC(fiq_handler, 7)
 
 	.globl led_on_addr
 led_on_addr:

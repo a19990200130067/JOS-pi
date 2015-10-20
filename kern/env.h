@@ -7,7 +7,8 @@
 //#include <kern/cpu.h>
 
 extern struct Env *envs;		// All environments
-#define curenv (thiscpu->cpu_env)		// Current environment
+//#define curenv (thiscpu->cpu_env)		// Current environment
+extern struct Env *curenv;
 
 void	env_init(void);
 void	env_init_percpu(void);

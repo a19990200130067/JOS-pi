@@ -3,10 +3,12 @@
 #include <inc/assert.h>
 #include <inc/string.h>
 
+#include <kern/env.h>
 #include <kern/pmap.h>
 #include <kern/trap.h>
 #include <kern/console.h>
 #include <kern/monitor.h>
+#include <kern/syscall.h>
 //#include <kern/env.h>
 
 static struct Trapframe *last_tf;
@@ -60,6 +62,7 @@ void
 trap(struct Trapframe *tf, uint32_t trap_num)
 {
     uint32_t lr;
+    curenv->env_tf = *tf;
     asm volatile("mov %[val], lr" : [val] "=r" (lr):);
     cprintf("in trap!!! cpsr is: 0x%x, spsr is 0x%x, r0 is 0x%x\n", rcpsr(), rspsr(), trap_num);
     cprintf("in trap2!!! cpsr is: 0x%x, lr is 0x%x\n", rcpsr(), lr);
@@ -70,7 +73,19 @@ trap(struct Trapframe *tf, uint32_t trap_num)
     tf->tf_sp_svc = 0;
     tf->tf_lr_svc = 0;
     //asm volatile("swi #10":::);
-    cprintf("why swi not working?\n");
+    cprintf("why swi not working???\n");
+    switch (trap_num) {
+    case 2:
+	tf->tf_regs.reg_r0 = syscall(tf->tf_regs.reg_r0,
+				     tf->tf_regs.reg_r1,
+				     tf->tf_regs.reg_r2,
+				     tf->tf_regs.reg_r3,
+				     tf->tf_regs.reg_r4,
+				     tf->tf_regs.reg_r5);
+	break;
+    default:
+	cprintf("other traps, should not happen\n");
+    }
 }
 
 void

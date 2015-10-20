@@ -3,6 +3,8 @@
 
 #include <inc/types.h>
 
+#ifndef __ASSEMBLER__
+
 static __inline uint32_t rttbr0(void) __attribute__((always_inline));
 static __inline void lttbr0(uint32_t val) __attribute__((always_inline));
 
@@ -48,7 +50,15 @@ lttbr0(uint32_t val)
 static __inline void
 invlpg(void *addr)
 {
+    __asm __volatile("mcr p15, 0, %[address], c8, c6, 1" : : [address] "r" (addr) : "memory");
     __asm __volatile("mcr p15, 0, %[address], c8, c7, 1" : : [address] "r" (addr) : "memory");
+}
+
+static __inline void
+invatlb(void *addr)
+{
+    __asm __volatile("mcr p15, 0, %[address], c8, c6, 0" : : [address] "r" (addr) : "memory");
+    __asm __volatile("mcr p15, 0, %[address], c8, c7, 0" : : [address] "r" (addr) : "memory");
 }
 
 static __inline uint32_t
@@ -86,5 +96,7 @@ read_pc(void)
     __asm __volatile("movs %[result], pc" : [result] "=r" (val) :);
     return val;
 }
+
+#endif /* ASSEMBLER */
 
 #endif
